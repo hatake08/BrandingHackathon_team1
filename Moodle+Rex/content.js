@@ -28,18 +28,71 @@ function getSyllabusWeight() {
     };
 }
 
-// ==========================================
-// 2. 計算ロジック
-// ==========================================
 async function calculateScore() {
-    const data = await getPortalData();
-    const weight = getSyllabusWeight();
+    console.log("ダッシュボードの点数計算を開始します...");
 
-    // 割合と重みを掛け算
-    const attendanceScore = data.attendanceRate * weight.attendance;
-    const assignmentScore = data.assignmentRate * weight.assignment;
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseCode = urlParams.get('id');
+
+    if (!courseCode) return 0;
+
+    // 1. 渡してもらった巡回ロジックから、ガチの提出数と公開済み総課題数をもらう
+    const assignmentData = await GetMoodleData.getAssignment(); 
     
+    // 2. getSyllabus.js からこの科目の評価配点（例: 100%）を取得
+    const weight = await GetSyllabusData.getEvaluationWeight(courseCode);
+
+    // ==========================================
+    // 🗓️ 【追加】現在の日付から何回目の授業かを導出
+    // ==========================================
+    const today = new Date();
+    // 4月1日を春学期の開始日（基準日）として設定
+    const semesterStartDate = new Date(today.getFullYear(), 3, 1); 
+    const diffDays = Math.ceil(Math.abs(today - semesterStartDate) / (1000 * 60 * 60 * 24));
+    
+    // 現在が第何週目（＝第何回授業期間）かを算出
+    let currentLessonCount = Math.ceil(diffDays / 7);
+    if (currentLessonCount < 1) currentLessonCount = 1;
+    if (currentLessonCount > 14) currentLessonCount = 14; 
+
+    // ==========================================
+    // 🚀 【追加】検出された総課題数を現在の授業数で割り、14をかけて推定の課題数を導出
+    // ==========================================
+    const TOTAL_LESSONS = 14;
+    let estimatedTotalTasks = 0;
+
+    if (currentLessonCount > 0) {
+        // (検出された総課題数 ÷ 現在の授業回数) × 14回 ＝ 推定の課題母数
+        const tasksPerLesson = assignmentData.total / currentLessonCount;
+        estimatedTotalTasks = Math.round(tasksPerLesson * TOTAL_LESSONS);
+        
+        console.log(`[計算内訳] 日付からの現在の授業回数: ${currentLessonCount}回`);
+        console.log(`[計算内訳] 1回あたりの平均課題数: ${tasksPerLesson.toFixed(2)}個`);
+        console.log(`[計算内訳] 全14回分の【推定総母数】: ${estimatedTotalTasks}個`);
+    }
+
+    // ==========================================
+    // 📊 【追加】提出数をその推定母数で割って割合を導出
+    // ==========================================
+    let assignmentRate = 0;
+    if (estimatedTotalTasks > 0) {
+        assignmentRate = assignmentData.submitted / estimatedTotalTasks;
+    }
+    if (assignmentRate > 1.0) assignmentRate = 1.0; // 100%上限セーフティ
+
+    // 配点（％）を掛け算する
+    const assignmentScore = assignmentRate * weight.assignment; 
+    
+    // 出席率の計算（配点0%なら自動的に0点換算）
+    let attendanceRate = 0.8; 
+    const attendanceScore = attendanceRate * weight.attendance;
+    
+    // 現在の合計素点（100点満点中）
     const currentTotal = attendanceScore + assignmentScore;
+
+    console.log(`【最終結果】 実際の提出数: ${assignmentData.submitted} / 推定母数: ${estimatedTotalTasks}個`);
+    console.log(`➔ 現在の獲得点: ${currentTotal.toFixed(1)} / 100点`);
+    
     return Math.round(currentTotal);
 }
 
