@@ -25,7 +25,7 @@
     },
     {
       "matches": ["https://syllabus.ritsumei.ac.jp/syllabus/s/*"],
-      "js": ["syllabus_src.js"]
+      "js": ["parseSyllabus.js"]
     }
   ]
 }
