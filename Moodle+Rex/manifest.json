@@ -20,7 +20,7 @@
       "js": [
         "getMoodle.js",
         "getSyllabus.js",
-        "content.js"
+        "scoreDashbord.js"
       ]
     },
     {
