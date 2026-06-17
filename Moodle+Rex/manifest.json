@@ -2,11 +2,19 @@
   "manifest_version": 3,
   "name": "Moodle Announcement Viewer",
   "version": "1.0",
-  "description": "Moodleのお知らせをまとめて表示",
+
   "content_scripts": [
     {
-      "matches": ["https://lms.ritsumei.ac.jp/*"],
-      "js": ["content.js"]
+      "matches": [
+        "https://lms.ritsumei.ac.jp/*"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
+  ],
+
+  "host_permissions": [
+    "https://lms.ritsumei.ac.jp/*"
   ]
 }
