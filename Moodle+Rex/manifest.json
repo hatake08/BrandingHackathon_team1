@@ -4,18 +4,28 @@
   "version": "1.0",
   "description": "成績データとシラバス割合を計算してmoodel+R上で可視化する",
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
-    "https://*.ritsumei.ac.jp/*"
+    "https://*.ritsumei.ac.jp/*",
+    "https://syllabus.ritsumei.ac.jp/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://lms.ritsumei.ac.jp/*"],
       "js": [
         "getMoodle.js",
         "getSyllabus.js",
-        "content.js"]
+        "content.js"
+      ]
+    },
+    {
+      "matches": ["https://syllabus.ritsumei.ac.jp/syllabus/s/*"],
+      "js": ["syllabus_src.js"]
     }
   ]
 }
