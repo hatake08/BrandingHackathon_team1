@@ -78,3 +78,54 @@ async function main() {
 }
 
 main();
+
+async function main() {
+
+    const courseUrls = getCourseLinks();
+
+    const allAnnouncements = [];
+
+    for (const url of courseUrls) {
+
+        const announcements =
+            await getAnnouncementLinks(url);
+
+        allAnnouncements.push(...announcements);
+    }
+
+    // ===== 表示パネル作成 =====
+
+    const panel = document.createElement("div");
+
+    panel.style.position = "fixed";
+    panel.style.top = "20px";
+    panel.style.right = "20px";
+    panel.style.width = "400px";
+    panel.style.maxHeight = "600px";
+    panel.style.overflowY = "auto";
+    panel.style.background = "white";
+    panel.style.border = "2px solid #333";
+    panel.style.padding = "10px";
+    panel.style.zIndex = "99999";
+
+    const title = document.createElement("h3");
+    title.textContent = "アナウンス一覧";
+    panel.appendChild(title);
+
+    allAnnouncements.forEach(item => {
+
+        const link = document.createElement("a");
+
+        link.href = item.href;
+        link.textContent = item.title;
+        link.target = "_blank";
+
+        panel.appendChild(link);
+        panel.appendChild(document.createElement("br"));
+        panel.appendChild(document.createElement("br"));
+    });
+
+    document.body.appendChild(panel);
+}
+
+main();
