@@ -1,80 +1,197 @@
-async function main() {
+(async function () {
 
-    const courseUrls = getCourseLinks();
+  // =====================
+  // 表示ボックス
+  // =====================
+  const box = document.createElement("div");
 
-    const allAnnouncements = [];
+  box.id = "announcement-box";
 
-    for (const url of courseUrls) {
+  Object.assign(box.style, {
+    position: "fixed",
+    top: "20px",
+    right: "20px",
+    width: "450px",
+    maxHeight: "600px",
+    overflowY: "auto",
+    background: "white",
+    border: "1px solid #ccc",
+    padding: "15px",
+    zIndex: "99999",
+    boxShadow: "0 0 10px rgba(0,0,0,0.2)"
+  });
 
-        // 授業ページ取得
-        const response = await fetch(url);
-        const html = await response.text();
+  box.innerHTML = `
+    <h3>アナウンス一覧</h3>
+    <ul id="announcement-list"></ul>
+  `;
 
-        const doc = new DOMParser()
-            .parseFromString(html, "text/html");
+  document.body.appendChild(box);
 
-        // 授業名取得
-        const courseName =
-            doc.querySelector("h1")?.textContent.trim()
-            || "授業名不明";
+  const listContainer =
+    document.getElementById("announcement-list");
 
-        // アナウンス取得
-        const announcements =
-            await getAnnouncementLinks(url);
+  // =====================
+  // 重複防止用
+  // =====================
+  const courseLinks = new Set();
+  const discussionIds = new Set();
 
-        announcements.forEach(item => {
-            allAnnouncements.push({
-                course: courseName,
-                title: item.title,
-                href: item.href
-            });
-        });
-    }
-
-    createDashboardPanel(allAnnouncements);
-}
-
-main();
-
-function createDashboardPanel(data) {
-
-    const panel = document.createElement("div");
-
-    panel.id = "announcement-panel";
-
-    panel.style.margin = "20px 0";
-    panel.style.padding = "15px";
-    panel.style.background = "#fff";
-    panel.style.border = "1px solid #ccc";
-
-    const title = document.createElement("h2");
-    title.textContent = "アナウンス一覧";
-
-    panel.appendChild(title);
-
-    data.forEach(item => {
-
-        const row = document.createElement("div");
-
-        row.style.marginBottom = "10px";
-
-        row.innerHTML = `
-            <strong>${item.course}</strong><br>
-            <a href="${item.href}" target="_blank">
-                ${item.title}
-            </a>
-        `;
-
-        panel.appendChild(row);
+  // =====================
+  // コース取得
+  // =====================
+  document
+    .querySelectorAll(
+      'a[href*="/course/view.php?id="]'
+    )
+    .forEach(link => {
+      courseLinks.add(link.href);
     });
 
-    // Moodleダッシュボードに挿入
-    const dashboard =
-        document.querySelector("#page-content");
+  const parser = new DOMParser();
 
-    if (dashboard) {
-        dashboard.prepend(panel);
-    } else {
-        document.body.prepend(panel);
+  console.log(
+    "取得コース数:",
+    courseLinks.size
+  );
+
+  // =====================
+  // コース巡回
+  // =====================
+  for (const courseUrl of courseLinks) {
+
+    try {
+
+      const response =
+        await fetch(courseUrl);
+
+      const htmlText =
+        await response.text();
+
+      const doc =
+        parser.parseFromString(
+          htmlText,
+          "text/html"
+        );
+
+      // =====================
+      // フォーラム取得
+      // =====================
+      const forums =
+        doc.querySelectorAll(
+          '.modtype_forum a[href*="/mod/forum/view.php"]'
+        );
+
+      for (const forum of forums) {
+
+        try {
+
+          const forumResponse =
+            await fetch(forum.href);
+
+          const forumHtml =
+            await forumResponse.text();
+
+          const forumDoc =
+            parser.parseFromString(
+              forumHtml,
+              "text/html"
+            );
+
+          // =====================
+          // ディスカッション取得
+          // =====================
+          const discussions =
+            forumDoc.querySelectorAll(
+              "tr.discussion"
+            );
+
+          discussions.forEach(row => {
+
+            const discussion =
+              row.querySelector(
+                'a[href*="/mod/forum/discuss.php"]'
+              );
+
+            if (!discussion) return;
+
+            const title =
+              discussion.textContent.trim();
+
+            const href =
+              discussion.href;
+
+            const match =
+              href.match(
+                /discuss\.php\?d=(\d+)/
+              );
+
+            if (!match) return;
+
+            const discussionId =
+              match[1];
+
+            // 重複除去
+            if (
+              discussionIds.has(
+                discussionId
+              )
+            ) {
+              return;
+            }
+
+            discussionIds.add(
+              discussionId
+            );
+
+            const li =
+              document.createElement(
+                "li"
+              );
+
+            li.style.marginBottom =
+              "8px";
+
+            li.innerHTML = `
+              <a href="${href}"
+                 target="_blank">
+                ${title}
+              </a>
+            `;
+
+            listContainer.appendChild(
+              li
+            );
+
+          });
+
+        } catch (e) {
+
+          console.error(
+            "forum取得失敗",
+            forum.href,
+            e
+          );
+
+        }
+
+      }
+
+    } catch (e) {
+
+      console.error(
+        "course取得失敗",
+        courseUrl,
+        e
+      );
+
     }
-}
+
+  }
+
+  console.log(
+    "取得ディスカッション数:",
+    discussionIds.size
+  );
+
+})();

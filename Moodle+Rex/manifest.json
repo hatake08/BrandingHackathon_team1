@@ -3,6 +3,10 @@
   "name": "Moodle Announcement Viewer",
   "version": "1.0",
 
+  "permissions": [
+    "activeTab"
+  ],
+
   "content_scripts": [
     {
       "matches": [
@@ -12,9 +16,5 @@
         "content.js"
       ]
     }
-  ],
-
-  "host_permissions": [
-    "https://lms.ritsumei.ac.jp/*"
   ]
 }
