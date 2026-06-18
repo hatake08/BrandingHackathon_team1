@@ -3,6 +3,11 @@ class GetSyllabusData {
         console.log(`========================================`);
         console.log(`科目ID: ${courseId}`);
 
+        let result = {
+            exam: 0,
+            daily: 0
+        };
+
         // 画面から5桁の授業コードを抽出
         const summaryElement = document.querySelector(".block_course_summary .text_to_html");
         let classCode = null;
