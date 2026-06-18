@@ -1,131 +1,80 @@
-// ===== announcement.js の内容 =====
-
-async function getAnnouncementLinks(courseUrl) {
-    try {
-        const response = await fetch(courseUrl);
-        const htmlText = await response.text();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, "text/html");
-
-        const forums = doc.querySelectorAll(".modtype_forum");
-
-        const announcements = [];
-
-        forums.forEach(forum => {
-            const link = forum.querySelector("a");
-
-            if (!link) return;
-
-            announcements.push({
-                title: link.textContent.trim(),
-                href: link.href
-            });
-        });
-
-        return announcements;
-
-    } catch (error) {
-        console.error("取得失敗:", courseUrl, error);
-        return [];
-    }
-}
-
-
-// ===== 元の content.js =====
-
-function getCourseLinks() {
-    const courseLinks = [];
-
-    document
-        .querySelectorAll('a[href*="/course/view.php?id="]')
-        .forEach(link => {
-            courseLinks.push(link.href);
-        });
-
-    return [...new Set(courseLinks)];
-}
-
-
 async function main() {
 
     const courseUrls = getCourseLinks();
-
-    console.log("授業一覧");
-    console.log(courseUrls);
 
     const allAnnouncements = [];
 
     for (const url of courseUrls) {
 
-        console.log("取得中:", url);
+        // 授業ページ取得
+        const response = await fetch(url);
+        const html = await response.text();
 
+        const doc = new DOMParser()
+            .parseFromString(html, "text/html");
+
+        // 授業名取得
+        const courseName =
+            doc.querySelector("h1")?.textContent.trim()
+            || "授業名不明";
+
+        // アナウンス取得
         const announcements =
             await getAnnouncementLinks(url);
 
-        allAnnouncements.push(...announcements);
+        announcements.forEach(item => {
+            allAnnouncements.push({
+                course: courseName,
+                title: item.title,
+                href: item.href
+            });
+        });
     }
 
-    console.log("取得結果");
-    console.log(allAnnouncements);
-
-    // 動作確認用
-    alert(
-        allAnnouncements.length > 0
-            ? `${allAnnouncements.length}件取得しました`
-            : "アナウンスが見つかりません"
-    );
+    createDashboardPanel(allAnnouncements);
 }
 
 main();
 
-async function main() {
-
-    const courseUrls = getCourseLinks();
-
-    const allAnnouncements = [];
-
-    for (const url of courseUrls) {
-
-        const announcements =
-            await getAnnouncementLinks(url);
-
-        allAnnouncements.push(...announcements);
-    }
-
-    // ===== 表示パネル作成 =====
+function createDashboardPanel(data) {
 
     const panel = document.createElement("div");
 
-    panel.style.position = "fixed";
-    panel.style.top = "20px";
-    panel.style.right = "20px";
-    panel.style.width = "400px";
-    panel.style.maxHeight = "600px";
-    panel.style.overflowY = "auto";
-    panel.style.background = "white";
-    panel.style.border = "2px solid #333";
-    panel.style.padding = "10px";
-    panel.style.zIndex = "99999";
+    panel.id = "announcement-panel";
 
-    const title = document.createElement("h3");
+    panel.style.margin = "20px 0";
+    panel.style.padding = "15px";
+    panel.style.background = "#fff";
+    panel.style.border = "1px solid #ccc";
+
+    const title = document.createElement("h2");
     title.textContent = "アナウンス一覧";
+
     panel.appendChild(title);
 
-    allAnnouncements.forEach(item => {
+    data.forEach(item => {
 
-        const link = document.createElement("a");
+        const row = document.createElement("div");
 
-        link.href = item.href;
-        link.textContent = item.title;
-        link.target = "_blank";
+        row.style.marginBottom = "10px";
 
-        panel.appendChild(link);
-        panel.appendChild(document.createElement("br"));
-        panel.appendChild(document.createElement("br"));
+        row.innerHTML = `
+            <strong>${item.course}</strong><br>
+            <a href="${item.href}" target="_blank">
+                ${item.title}
+            </a>
+        `;
+
+        panel.appendChild(row);
     });
 
-    document.body.appendChild(panel);
-}
+    // Moodleダッシュボードに挿入
+    const dashboard =
+        document.querySelector("#page-content");
 
-main();
+    if (dashboard) {
+        dashboard.prepend(panel);
+    } else {
+        document.body.prepend(panel);
+    }
+}
