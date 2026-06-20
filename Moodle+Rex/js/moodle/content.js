@@ -15,9 +15,10 @@ async function displayAnnouncements(allAnnouncements) {
     if (!targetArea) return;
 
     const storageData = await new Promise(resolve => {
-        chrome.storage.local.get(['readAnnouncementUrls'], res => resolve(res.readAnnouncementUrls || []));
+        chrome.storage.local.get(['readAnnouncementUrls', 'hiddenAnnouncementUrls'], res => resolve(res));
     });
-    const readUrls = new Set(storageData);
+    const readUrls = new Set(storageData.readAnnouncementUrls || []);
+    const hiddenUrls = new Set(storageData.hiddenAnnouncementUrls || []);
 
     const panel = document.createElement('div');
     panel.id = 'moodle-announcement-panel';
@@ -30,7 +31,7 @@ async function displayAnnouncements(allAnnouncements) {
     panel.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: #ad3333; font-size: 16px; display: flex; align-items: center; gap: 6px; font-weight: bold;">
-                アナウンスメント一括表示
+                各講義のアナウンスメント一括表示
             </h3>
             <div id="ann-filter-tabs" style="display: flex; gap: 6px;">
                 <button data-filter="unread" style="padding: 3px 10px; border-radius: 20px; border: 1px solid #ad3333; background: #ad3333; color: white; cursor: pointer; font-size: 11px; font-weight: bold;">未読 (<span id="count-unread">0</span>)</button>
@@ -53,6 +54,8 @@ async function displayAnnouncements(allAnnouncements) {
         let displayedItems = 0;
 
         allAnnouncements.forEach(ann => {
+            if (hiddenUrls.has(ann.href)) return;
+
             const isRead = readUrls.has(ann.href);
             
             allCnt++;
@@ -118,20 +121,21 @@ async function displayAnnouncements(allAnnouncements) {
 
 async function main() {
     const currentUrl = window.location.href;
-    const isHomePage = currentUrl.includes('/my/') || 
-                       currentUrl.endsWith('lms.ritsumei.ac.jp/') || 
-                       currentUrl.endsWith('lms.ritsumei.ac.jp/index.php');
+    const isHomePage = currentUrl.includes('/my/') || currentUrl.endsWith('lms.ritsumei.ac.jp/') || currentUrl.endsWith('lms.ritsumei.ac.jp/index.php');
     
-    if (!isHomePage) {
-        return;
-    }
+    if (!isHomePage) return;
 
+    console.log("[AnnouncementViewer] スキャンを開始します...");
     const courseUrls = getCourseLinks();
     const allAnnouncements = [];
 
     for (const url of courseUrls) {
-        const announcements = await getAnnouncementLinks(url);
-        allAnnouncements.push(...announcements);
+        try {
+            const announcements = await getAnnouncementLinks(url);
+            allAnnouncements.push(...announcements);
+        } catch (e) {
+            console.error(`コース [${url}] のお知らせ取得に失敗:`, e);
+        }
     }
 
     const uniqueAnnouncements = [];
@@ -143,6 +147,8 @@ async function main() {
             uniqueAnnouncements.push(ann);
         }
     });
+
+    chrome.storage.local.set({ cachedAllAnnouncements: uniqueAnnouncements });
 
     displayAnnouncements(uniqueAnnouncements);
 }

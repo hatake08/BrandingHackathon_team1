@@ -12,26 +12,28 @@
     "https://syllabus.ritsumei.ac.jp/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "js/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://lms.ritsumei.ac.jp/*"],
       "js": [
-        "announcement.js",
-        "content.js",
-        "getMoodle.js",
-        "getSyllabus.js",
-        "scoreDashbord.js"
+        "js/moodle/announcement.js",
+        "js/moodle/content.js",
+        "js/moodle/getMoodle.js",
+        "js/moodle/getSyllabus.js",
+        "js/moodle/scoreDashbord.js",
+        "js/moodle/connectGoogleCalendar.js",
+        "js/moodle/drawer.js"
       ]
     },
     {
       "matches": ["https://syllabus.ritsumei.ac.jp/syllabus/s/*"],
-      "js": ["parseSyllabus.js"]
+      "js": ["js/syllabus/parseSyllabus.js"]
     },
     {
       "matches": ["https://lms.ritsumei.ac.jp/calendar/view.php*"],
-      "js": ["connectGoogleCalendar.js"]
+      "js": ["js/moodle/connectGoogleCalendar.js"]
     }
   ]
 }
