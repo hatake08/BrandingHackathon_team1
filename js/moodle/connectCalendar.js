@@ -1,8 +1,5 @@
-// connectGoogleCalendar.js
-console.log("[MoodleCalendarSync] カレンダー画面専用・超正確システムが起動しました。");
-
 // ========================================================
-// 1. カレンダー画面のマス目（HTML）からイベントを正確に抽出
+// 1. カレンダー画面からイベントを抽出
 // ========================================================
 function extractMoodleEvents() {
     const events = [];
@@ -27,7 +24,7 @@ function extractMoodleEvents() {
     eventItems.forEach(item => {
         const linkEl = item.querySelector('a[data-action="view-event"]') || item.querySelector('a[href*="view.php?id="]');
         const nameEl = item.querySelector('.eventname') || item;
-        const dayCell = item.closest('td.day'); // 💡 カレンダーのマス目を基準にする
+        const dayCell = item.closest('td.day');
 
         if (!linkEl || !nameEl || !dayCell) return;
 
@@ -41,7 +38,6 @@ function extractMoodleEvents() {
         const eventDate = new Date(year, month, parseInt(dateNum, 10));
         eventDate.setHours(0, 0, 0, 0);
 
-        // 💡 厳密な今日以降判定
         if (eventDate >= today) {
             const eventDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
             seenUrls.add(eventUrl);
@@ -75,7 +71,7 @@ function generateIcsFile(checkedBoxes) {
         const cleanDate = dateStr.replace(/-/g, "");
 
         icsContent.push("BEGIN:VEVENT");
-        icsContent.push(`SUMMARY:📌【締切】${title}`);
+        icsContent.push(`SUMMARY:【締切】${title}`);
         icsContent.push(`DESCRIPTION:Moodle課題\\n詳細: ${url}`);
         icsContent.push(`DTSTART;VALUE=DATE:${cleanDate}`);
         icsContent.push(`DTEND;VALUE=DATE:${cleanDate}`);
@@ -115,7 +111,7 @@ function showSyncModal(events) {
     });
 
     modal.innerHTML = `
-        <h3 style="margin-top: 0; color: #ad3333; font-size: 16px; font-weight: bold;">📅 Googleカレンダー同期（今日以降の予定）</h3>
+        <h3 style="margin-top: 0; color: #ad3333; font-size: 16px; font-weight: bold;">Googleカレンダー同期</h3>
         <p style="font-size: 11px; color: #666; margin-bottom: 12px;">今日以降の締め切りタスクのみを自動抽出しました。チェックした項目をiCal形式でエクスポートします。</p>
         <div style="max-height: 280px; overflow-y: auto; margin-bottom: 16px; border: 1px solid #eee; padding: 8px; border-radius: 6px; background: #fafafa;">
             ${listHtml || '<p style="font-size:14px; color:#999; padding: 20px 0; text-align:center;">今日以降の対象イベントが見つかりませんでした。</p>'}
@@ -147,7 +143,7 @@ function showSyncModal(events) {
         const gcalSettingsUrl = "https://calendar.google.com/calendar/u/0/r/settings/export?settings=importandexport";
 
         modal.innerHTML = `
-            <h3 style="color: green; font-size:16px; font-weight: bold;">🎉 カレンダーファイルの作成が完了しました！</h3>
+            <h3 style="color: green; font-size:16px; font-weight: bold;">カレンダーファイルの作成が完了しました</h3>
             <p style="font-size:13px; margin-bottom: 12px;">ダウンロードフォルダに <strong>「moodle_future_tasks.ics」</strong> が保存されました。</p>
             <p style="font-size:12px; color: #666; background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #4ea4d9; line-height: 1.4;">
                 下のボタンを押すと、Googleカレンダーのインポート画面が開きます。そこに、今ダウンロードされたファイルをドラッグ＆ドロップしてください。
@@ -182,12 +178,12 @@ function injectCalendarPageButton() {
 
     const syncBtn = document.createElement('button');
     syncBtn.id = 'moodle-gcal-sync-btn';
-    syncBtn.textContent = '📅 Googleカレンダー同期';
+    syncBtn.textContent = 'Googleカレンダー同期';
     syncBtn.className = 'btn text-white mb-2 me-2'; 
-    syncBtn.style.cssText = `background-color: #4ea4d9; border: none; font-weight: bold; cursor: pointer; font-size: 14px;`;
+    syncBtn.style.cssText = `background-color: #ad3333; border: none; font-weight: bold; cursor: pointer; font-size: 14px;`;
     
-    syncBtn.onmouseover = () => syncBtn.style.backgroundColor = "#3b8cb8";
-    syncBtn.onmouseout = () => syncBtn.style.backgroundColor = "#4ea4d9";
+    syncBtn.onmouseover = () => syncBtn.style.backgroundColor = "#ad3333";
+    syncBtn.onmouseout = () => syncBtn.style.backgroundColor = "#ad3333";
     syncBtn.onclick = () => { window.triggerMoodleCalendarSync(); };
 
     if (targetArea.firstChild) {
