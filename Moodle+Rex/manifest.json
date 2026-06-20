@@ -2,16 +2,14 @@
   "manifest_version": 3,
   "name": "moodle+R ex",
   "version": "1.0",
-  "description": "moodel+Rでの学習を最適化する機能を追加します",
+  "description": "moodle+Rでの学習を最適化する機能を追加します",
   "permissions": [
     "storage",
-    "tabs",
-    "identity"
+    "tabs"
   ],
   "host_permissions": [
     "https://*.ritsumei.ac.jp/*",
-    "https://syllabus.ritsumei.ac.jp/*",
-    "https://www.googleapis.com/*"
+    "https://syllabus.ritsumei.ac.jp/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,6 +18,8 @@
     {
       "matches": ["https://lms.ritsumei.ac.jp/*"],
       "js": [
+        "announcement.js",
+        "content.js",
         "getMoodle.js",
         "getSyllabus.js",
         "scoreDashbord.js"
@@ -32,12 +32,6 @@
     {
       "matches": ["https://lms.ritsumei.ac.jp/calendar/view.php*"],
       "js": ["connectGoogleCalendar.js"]
-    }
-  ],
-  "web_accessible_resources" : [
-    {
-      "resources": ["inject.js"],
-      "matches": ["https://lms.ritsumei.ac.jp/*"]
     }
   ]
 }
