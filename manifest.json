@@ -23,7 +23,7 @@
         "js/moodle/getMoodle.js",
         "js/moodle/getSyllabus.js",
         "js/moodle/scoreDashbord.js",
-        "js/moodle/connectGoogleCalendar.js",
+        "js/moodle/connectCalendar.js",
         "js/moodle/drawer.js"
       ]
     },
@@ -33,7 +33,7 @@
     },
     {
       "matches": ["https://lms.ritsumei.ac.jp/calendar/view.php*"],
-      "js": ["js/moodle/connectGoogleCalendar.js"]
+      "js": ["js/moodle/connectCalendar.js"]
     }
   ]
 }
